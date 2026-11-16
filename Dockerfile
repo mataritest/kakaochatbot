@@ -1,6 +1,6 @@
 FROM node:22-alpine
 WORKDIR /app
-COPY package.json server.mjs core.mjs content.json index.html ./
+COPY package.json server.mjs core.mjs keepalive.mjs content.json index.html ./
 ENV HOST=0.0.0.0 PORT=8787 NODE_ENV=production
 EXPOSE 8787
 USER node

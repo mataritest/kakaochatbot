@@ -8,6 +8,6 @@
   },
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test bot.test.mjs http.test.mjs"
+    "test": "node --test bot.test.mjs http.test.mjs keepalive.test.mjs"
   }
 }

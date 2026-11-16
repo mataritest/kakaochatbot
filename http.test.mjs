@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';
 import assert from 'node:assert/strict';
-process.env.PORT='0';process.env.SKILL_TOKEN='test-only-secret-at-least-24-characters';
+process.env.PORT='0';process.env.SKILL_TOKEN='test-only-secret-at-least-24-characters';process.env.KEEP_ALIVE_ENABLED='false';
 const {server}=await import('./server.mjs');
 if(!server.listening)await new Promise(r=>server.once('listening',r));
 const base=`http://127.0.0.1:${server.address().port}`;
