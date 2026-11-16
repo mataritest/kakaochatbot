@@ -1,0 +1,4 @@
+{
+  "blockIds": {},
+  "note": "Optional: map logical IDs such as E-04 to actual Kakao block IDs. Default message actions use extra.targetBlock and the fallback skill. Never map S-03 as a fixed FAQ."
+}

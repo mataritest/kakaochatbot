@@ -1,0 +1,27 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+process.env.PORT='0';process.env.SKILL_TOKEN='test-only-secret-at-least-24-characters';
+const {server}=await import('./server.mjs');
+if(!server.listening)await new Promise(r=>server.once('listening',r));
+const base=`http://127.0.0.1:${server.address().port}`;
+after(()=>new Promise(r=>server.close(r)));
+const headers={'Content-Type':'application/json','x-skill-token':process.env.SKILL_TOKEN};
+test('skill HTTP endpoint, authentication, malformed bodies and no cache',async()=>{
+ const req=(body,h=headers,p='/skill')=>fetch(base+p,{method:'POST',headers:h,body});
+ assert.equal((await fetch(base+'/health')).status,200);
+ assert.equal((await req('{}',{'Content-Type':'application/json'})).status,401);
+ assert.equal((await req('{')).status,400);
+ assert.equal((await req('null')).status,400);
+ assert.equal((await req('[]')).status,400);
+ assert.equal((await req('{}',headers,'/skill/Z-99')).status,404);
+ assert.equal((await req('x'.repeat(33000))).status,413);
+ const r=await req(JSON.stringify({userRequest:{utterance:'난자 채취는 금식하나요'}}));
+ assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');
+ const j=await r.json();assert.equal(j.version,'2.0');assert.match(j.template.outputs[0].simpleText.text,/금식/);
+ assert.ok(!('userRequest' in j));
+ const s=await req(JSON.stringify({userRequest:{utterance:'숨이 차요'}}),headers,'/skill/E-04');
+ assert.match((await s.json()).template.outputs[0].simpleText.text,/119/);
+ assert.equal((await fetch(base+'/content.json')).status,404);
+ assert.equal((await fetch(base+'/.env')).status,404);
+ const p=await fetch(base+'/');assert.equal(p.status,200);assert.match(await p.text(),/아가애봄/);
+});
