@@ -23,6 +23,7 @@ export function createBot(data, config = {}) {
     if(safety) return {id:safety,reason:'safety'};
     let id = requestedId ?? payload.action?.clientExtra?.targetBlock;
     if(id && byId.has(id)) return {id:byId.get(id).enabled?id:'H-01',reason:'button'};
+    if(payload.userRequest?.block?.name==='웰컴 블록') return {id:'S-01',reason:'welcome-block'};
     const mapped = Object.entries(config.blockIds??{}).find(([,v])=>v===payload.userRequest?.block?.id);
     if(mapped && mapped[0]!=='S-03') return {id:byId.get(mapped[0])?.enabled?mapped[0]:'H-01',reason:'mapped-block'};
     const n=norm(raw);

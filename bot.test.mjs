@@ -6,6 +6,8 @@ const data=JSON.parse(await fs.readFile(new URL('./content.json',import.meta.url
 const bot=createBot(data);
 const ask=t=>bot.handle({userRequest:{utterance:t}});
 test('patient questions and both doctor routes',()=>{
+ assert.equal(bot.handle({userRequest:{utterance:'웰컴',block:{name:'웰컴 블록'}}}).id,'S-01');
+ assert.equal(bot.handle({userRequest:{utterance:'출혈이 심해요',block:{name:'웰컴 블록'}}}).id,'S-05');
  for(const [q,id] of [
   ['난자 채취는 금식하나요','Q-01'],['이식하고 회사 가도 되나요','Q-02'],
   ['조무성 원장님 상담','B-08'],['유지희 원장님 상담','B-09'],
