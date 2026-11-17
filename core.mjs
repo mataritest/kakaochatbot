@@ -62,15 +62,25 @@ export function createBot(data, config = {}) {
   function response(id) {
     const b=byId.get(id)??byId.get('S-03');
     const outputs=[];
-    if(b.kind==='list') outputs.push({listCard:{header:{title:b.text},items:b.items.map(a=>{const {label,...rest}=action(a);return {title:label,...rest};})}});
-    else if(b.kind==='card') {
-      const cardActions=b.links.filter(a=>!a.target).slice(0,3);
-      outputs.push({textCard:{title:b.title,description:b.text,buttons:cardActions.map(a=>action(a)),buttonLayout:'vertical'}});
+    const imageUrl=b.asset?new URL(b.asset,data.meta.assetBaseUrl).href:null;
+    const consumed=new Set();
+    if(b.kind==='list') {
+      if(imageUrl)outputs.push({basicCard:{title:b.title,thumbnail:{imageUrl,fixedRatio:false}}});
+      outputs.push({listCard:{header:{title:b.text},items:b.items.map(a=>{const {label,...rest}=action(a);return {title:label,...rest};})}});
+    } else if(b.kind==='card'||imageUrl) {
+      const cardActions=b.links.slice(0,3);cardActions.forEach(a=>consumed.add(a));
+      const card={title:b.title,description:b.text,buttons:cardActions.map(a=>action(a)),buttonLayout:'vertical'};
+      if(imageUrl){card.thumbnail={imageUrl,fixedRatio:false};outputs.push({basicCard:card});}
+      else outputs.push({textCard:card});
     } else outputs.push({simpleText:{text:b.text}});
-    // QuickReply supports only message/block. Links/phones/operators belong in cards.
-    const external=b.kind==='card'?[]:b.links.filter(a=>!a.target);
-    for(let i=0;i<external.length;i+=3) outputs.push({textCard:{title:'연락·바로가기',buttons:external.slice(i,i+3).map(a=>action(a)),buttonLayout:'vertical'}});
-    const quickReplies=b.links.filter(a=>a.target).map(a=>action(a,true)).slice(0,10);
+    // Give the main next actions full-width rows with native separators.
+    // QuickReply supports only message/block; links/phones/operators stay in cards.
+    const remaining=b.links.filter(a=>!consumed.has(a));
+    const external=remaining.filter(a=>!a.target);
+    if(external.length){outputs.push({textCard:{title:'연락·바로가기',buttons:external.slice(0,3).map(a=>action(a)),buttonLayout:'vertical'}});external.slice(0,3).forEach(a=>consumed.add(a));}
+    const nav=b.links.filter(a=>a.target&&!consumed.has(a));
+    if(outputs.length<3&&nav.length){const rows=nav.slice(0,3);outputs.push({textCard:{title:'다음 안내를 선택해주세요',buttons:rows.map(a=>action(a)),buttonLayout:'vertical'}});rows.forEach(a=>consumed.add(a));}
+    const quickReplies=b.links.filter(a=>a.target&&!consumed.has(a)).map(a=>action(a,true)).slice(0,10);
     return {version:'2.0',template:{outputs,quickReplies}};
   }
   function handle(payload={},requestedId) {const selected=choose(payload,requestedId);return {...selected,block:byId.get(selected.id),response:response(selected.id)};}

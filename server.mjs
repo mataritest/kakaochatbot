@@ -20,6 +20,10 @@ export const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost');
   if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{status:'ok',version:data.meta.version,keepAlive:keepAlive.status});
+  if(req.method==='GET'&&/^\/menu-(faq|tests|ivf|consult|pgt|recurrent)\.png$/.test(url.pathname)){
+   res.writeHead(200,{...headers,'Cache-Control':'public, max-age=3600','Content-Type':'image/png'});
+   res.end(await fs.readFile(path.join(root,url.pathname.slice(1))));return;
+  }
   if(req.method==='POST'&&/^\/skill(?:\/[A-Z]-\d\d)?$/.test(url.pathname)){
    if(token&&!same(String(req.headers['x-skill-token']??''),token))return send(res,401,{error:'Unauthorized'});
    if(!String(req.headers['content-type']??'').toLowerCase().startsWith('application/json'))return send(res,415,{error:'application/json required'});

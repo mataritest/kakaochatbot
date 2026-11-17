@@ -45,6 +45,7 @@ test('all live outputs satisfy Kakao limits and reach home',()=>{
   for(const out of r.template.outputs){
    if(out.simpleText)assert.ok(out.simpleText.text.length<=400);
    if(out.textCard){assert.ok(out.textCard.title.length<=50);assert.ok((out.textCard.description??'').length<=230);assert.ok(out.textCard.buttons.length<=3);}
+   if(out.basicCard){assert.ok(out.basicCard.title.length<=50);assert.ok((out.basicCard.description??'').length<=230);assert.ok((out.basicCard.buttons??[]).length<=3);assert.match(out.basicCard.thumbnail.imageUrl,/^https:\/\/agaebom-kakaochatbot\.onrender\.com\/menu-/);}
    if(out.listCard){assert.ok(out.listCard.items.length<=5);for(const i of out.listCard.items){assert.ok(i.title.length<=30);assert.ok(!('label'in i));assert.ok(['message','block'].includes(i.action));}}
   }
   assert.ok(Buffer.byteLength(JSON.stringify(r),'utf8')<30720);
@@ -58,9 +59,9 @@ test('all live outputs satisfy Kakao limits and reach home',()=>{
  }
 });
 test('real operator button and provided Naver URL',()=>{
- const op=bot.response('B-08').template.outputs[0].textCard.buttons;
+ const op=bot.response('B-08').template.outputs[0].basicCard.buttons;
  assert.ok(op.some(x=>x.action==='operator'));
- const nv=bot.response('B-09').template.outputs[0].textCard.buttons;
+ const nv=bot.response('B-09').template.outputs[0].basicCard.buttons;
  assert.equal(nv[0].webLinkUrl,'http://talk.naver.com/WFMOB5L');
 });
 test('every button target carries a reliable target and safety still applies',()=>{
@@ -70,5 +71,6 @@ test('every button target carries a reliable target and safety still applies',()
   assert.equal(selected.id,bot.byId.get(a.target).enabled?a.target:'H-01',b.id+' '+a.label);
  }
  const mapped=createBot(data,{blockIds:{'E-04':'realKakaoBlock'}}).response('E-01');
- assert.ok(mapped.template.quickReplies.some(a=>a.blockId==='realKakaoBlock'&&a.action==='block'));
+ const actions=[...mapped.template.quickReplies,...mapped.template.outputs.flatMap(o=>(o.basicCard??o.textCard)?.buttons??[])];
+ assert.ok(actions.some(a=>a.blockId==='realKakaoBlock'&&a.action==='block'));
 });
