@@ -16,6 +16,16 @@ test('patient questions and both doctor routes',()=>{
   ['이식 후 임신 확인 언제 하나요','Q-03'],['인공수정 시험관 차이','F-05'],['검사 결과 언제 나와요','D-05']
  ])assert.equal(ask(q).id,id,q);
 });
+
+test('patient responses omit source boilerplate and explain partner attendance clearly',()=>{
+ for(const b of data.blocks)assert.doesNotMatch(JSON.stringify(bot.response(b.id)),/팜플렛|팸플릿|팜플릿|시연|미리보기|기존 채널/);
+ const text=ask('배우자 동반이 필요한가요?').block.text;
+ assert.match(text,/혼자 내원 가능/);
+ assert.match(text,/첫 상담[\s\S]*초음파.*혈액검사/);
+ assert.match(text,/난자 채취일.*정자 채취/);
+ assert.match(text,/인공수정·시험관 시술 동의서.*부부 서명/);
+ assert.match(text,/별도 내원도 가능/);
+});
 test('safety takes priority over FAQ and explicit target',()=>{
  for(const [q,id] of [
   ['난자 채취 후 숨이 차요','S-05'],['출혈이 심해요','S-05'],['배가 너무 아파요','S-05'],
